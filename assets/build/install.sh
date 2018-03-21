@@ -209,11 +209,10 @@ sed -i \
 # configure supervisord log rotation
 cat > /etc/logrotate.d/supervisord <<EOF
 ${GITLAB_LOG_DIR}/supervisor/*.log {
-  weekly
+  size 100M
   missingok
-  rotate 52
+  rotate 3
   compress
-  delaycompress
   notifempty
   copytruncate
 }
@@ -222,11 +221,10 @@ EOF
 # configure gitlab log rotation
 cat > /etc/logrotate.d/gitlab <<EOF
 ${GITLAB_LOG_DIR}/gitlab/*.log {
-  weekly
+  size 100M
   missingok
-  rotate 52
+  rotate 3
   compress
-  delaycompress
   notifempty
   copytruncate
 }
@@ -235,11 +233,10 @@ EOF
 # configure gitlab-shell log rotation
 cat > /etc/logrotate.d/gitlab-shell <<EOF
 ${GITLAB_LOG_DIR}/gitlab-shell/*.log {
-  weekly
+  size 100M
   missingok
-  rotate 52
+  rotate 3
   compress
-  delaycompress
   notifempty
   copytruncate
 }
@@ -248,11 +245,10 @@ EOF
 # configure gitlab vhost log rotation
 cat > /etc/logrotate.d/gitlab-nginx <<EOF
 ${GITLAB_LOG_DIR}/nginx/*.log {
-  weekly
+  size 100M
   missingok
-  rotate 52
+  rotate 3
   compress
-  delaycompress
   notifempty
   copytruncate
 }
