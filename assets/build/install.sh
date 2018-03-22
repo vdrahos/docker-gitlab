@@ -379,3 +379,36 @@ EOF
 # purge build dependencies and cleanup apt
 DEBIAN_FRONTEND=noninteractive apt-get purge -y --auto-remove ${BUILD_DEPENDENCIES}
 rm -rf /var/lib/apt/lists/*
+
+# avoid fast growing of sidekiq.log
+read -r -d '' REPLACEMENT <<END
+class LessVerboseJobLogger
+  def call(item, queue)
+    start = Time.now
+    logger.debug("start")
+    yield
+    logger.debug("done: #{elapsed(start)} sec")
+  rescue Exception
+    logger.info("fail: #{elapsed(start)} sec")
+    raise
+  end
+
+  private
+
+  def elapsed(start)
+    (Time.now - start).round(3)
+  end
+
+  def logger
+    Sidekiq.logger
+  end
+end
+
+Sidekiq.configure_server do |config|
+  config.options[:job_logger] = LessVerboseJobLogger
+END
+
+IFS= read -r -d '' < <(sed -e ':a' -e '$!{N;ba' -e '}' -e 's/[&/\]/\\&/g; s/\n/\\&/g' <<<"$REPLACEMENT")
+REPLACEMENT=${REPLY%$'\n'}
+ORIGINAL='^Sidekiq.configure_server do |config|$'
+exec_as_git sed -i "0,/$ORIGINAL/{s/$ORIGINAL/$REPLACEMENT/}" ${GITLAB_INSTALL_DIR}/config/initializers/sidekiq.rb
