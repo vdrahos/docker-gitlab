@@ -19,7 +19,7 @@ BUILD_DEPENDENCIES="gcc g++ make patch pkg-config cmake paxctl \
 ## Execute a command as GITLAB_USER
 exec_as_git() {
   if [[ $(whoami) == ${GITLAB_USER} ]]; then
-    $@
+    "$@"
   else
     sudo -HEu ${GITLAB_USER} "$@"
   fi
