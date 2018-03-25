@@ -69,8 +69,8 @@ FROM docker-gitlab-base as nsws4py-builder
 RUN apt-get update \
     && apt-get -y install gcc make python3-dev libxml2-dev libxslt1-dev zlib1g-dev python3-pip python3-venv \
     && python3 -m venv /home/git/githook_env/ \
-    && /home/git/githook_env/bin/pip3 install -U pip setuptools wheel \
-    && /home/git/githook_env/bin/pip3 install  --extra-index-url https://pypi.eng.netsuite.com/simple/ nsws4py \
+    && /home/git/githook_env/bin/pip3 install wheel \
+    && /home/git/githook_env/bin/pip3 install --extra-index-url https://pypi.eng.netsuite.com/simple/ nsws4py \
     && rm -rf /var/lib/apt/lists/*
 
 FROM docker-gitlab-base

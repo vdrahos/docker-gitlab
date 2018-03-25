@@ -206,6 +206,9 @@ sed -i \
   -e "s|error_log /var/log/nginx/error.log;|error_log ${GITLAB_LOG_DIR}/nginx/error.log;|" \
   /etc/nginx/nginx.conf
 
+# fix "unknown group 'syslog'" error preventing logrotate from functioning
+sed -i "s|^su root syslog$|su root root|" /etc/logrotate.conf
+
 # configure supervisord log rotation
 cat > /etc/logrotate.d/supervisord <<EOF
 ${GITLAB_LOG_DIR}/supervisor/*.log {
@@ -381,7 +384,9 @@ DEBIAN_FRONTEND=noninteractive apt-get purge -y --auto-remove ${BUILD_DEPENDENCI
 rm -rf /var/lib/apt/lists/*
 
 # avoid fast growing of sidekiq.log
-read -r -d '' REPLACEMENT <<END
+ORIGINAL='\nSidekiq.configure_server do |config|\n'
+REPLACEMENT=$(sed -z 's/[&/\]/\\&/g ; s/\n/\\n/g'<<\EOF
+
 class LessVerboseJobLogger
   def call(item, queue)
     start = Time.now
@@ -389,7 +394,7 @@ class LessVerboseJobLogger
     yield
     logger.debug("done: #{elapsed(start)} sec")
   rescue Exception
-    logger.info("fail: #{elapsed(start)} sec")
+    logger.debug("fail: #{elapsed(start)} sec")
     raise
   end
 
@@ -406,9 +411,7 @@ end
 
 Sidekiq.configure_server do |config|
   config.options[:job_logger] = LessVerboseJobLogger
-END
+EOF
+)
 
-IFS= read -r -d '' < <(sed -e ':a' -e '$!{N;ba' -e '}' -e 's/[&/\]/\\&/g; s/\n/\\&/g' <<<"$REPLACEMENT")
-REPLACEMENT=${REPLY%$'\n'}
-ORIGINAL='^Sidekiq.configure_server do |config|$'
-exec_as_git sed -i "0,/$ORIGINAL/{s/$ORIGINAL/$REPLACEMENT/}" ${GITLAB_INSTALL_DIR}/config/initializers/sidekiq.rb
+exec_as_git sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q42" "${GITLAB_INSTALL_DIR}/config/initializers/sidekiq.rb"
