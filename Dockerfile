@@ -36,8 +36,8 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv E1DD270288B4E60
  && echo 'deb https://deb.nodesource.com/node_8.x xenial main' > /etc/apt/sources.list.d/nodesource.list \
  && wget --quiet -O - https://dl.yarnpkg.com/debian/pubkey.gpg  | apt-key add - \
  && echo 'deb https://dl.yarnpkg.com/debian/ stable main' > /etc/apt/sources.list.d/yarn.list \
- && apt-get update \
- && DEBIAN_FRONTEND=noninteractive apt-get install -y supervisor logrotate locales curl \
+ && apt-get update -o Acquire::Retries=3 \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -o Acquire::Retries=3 -y supervisor logrotate locales curl \
       nginx openssh-server mysql-client postgresql-client redis-tools \
       git-core ruby${RUBY_VERSION} python2.7 python-docutils nodejs yarn gettext-base \
       libmysqlclient20 libpq5 zlib1g libyaml-0-2 libssl1.0.0 \
