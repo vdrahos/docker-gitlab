@@ -426,4 +426,4 @@ logfile_backups=1
 EOF
 )
 
-exec_as_git sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q43" '/etc/supervisor/supervisord.conf'
+sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q43" '/etc/supervisor/supervisord.conf'
