@@ -417,7 +417,7 @@ EOF
 exec_as_git sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q42" "${GITLAB_INSTALL_DIR}/config/initializers/sidekiq.rb"
 
 # avoid supervisord rotating logfiles before logrotate
-ORIGINAL='\n[supervisord]\n'
+ORIGINAL='\n\[supervisord\]\n'
 REPLACEMENT=$(sed -z 's/[&/\]/\\&/g ; s/\n/\\n/g'<<\EOF
 
 [supervisord]
