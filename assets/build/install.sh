@@ -427,3 +427,6 @@ EOF
 )
 
 sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q43" '/etc/supervisor/supervisord.conf'
+
+# run logrotate every hour
+mv -n /etc/cron.daily/logrotate /etc/cron.hourly/
