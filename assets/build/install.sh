@@ -19,15 +19,15 @@ BUILD_DEPENDENCIES="gcc g++ make patch pkg-config cmake paxctl \
 ## Execute a command as GITLAB_USER
 exec_as_git() {
   if [[ $(whoami) == ${GITLAB_USER} ]]; then
-    $@
+    "$@"
   else
     sudo -HEu ${GITLAB_USER} "$@"
   fi
 }
 
 # install build dependencies for gem installation
-apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install -y ${BUILD_DEPENDENCIES}
+apt-get update -o Acquire::Retries=3
+DEBIAN_FRONTEND=noninteractive apt-get install -o Acquire::Retries=3 -y ${BUILD_DEPENDENCIES}
 
 # PaX-mark ruby
 # Applying the mark late here does make the build usable on PaX kernels, but
@@ -212,11 +212,10 @@ sed -i "s|^su root syslog$|su root root|" /etc/logrotate.conf
 # configure supervisord log rotation
 cat > /etc/logrotate.d/supervisord <<EOF
 ${GITLAB_LOG_DIR}/supervisor/*.log {
-  weekly
+  size 100M
   missingok
-  rotate 52
+  rotate 3
   compress
-  delaycompress
   notifempty
   copytruncate
 }
@@ -225,11 +224,10 @@ EOF
 # configure gitlab log rotation
 cat > /etc/logrotate.d/gitlab <<EOF
 ${GITLAB_LOG_DIR}/gitlab/*.log {
-  weekly
+  size 100M
   missingok
-  rotate 52
+  rotate 3
   compress
-  delaycompress
   notifempty
   copytruncate
 }
@@ -238,11 +236,10 @@ EOF
 # configure gitlab-shell log rotation
 cat > /etc/logrotate.d/gitlab-shell <<EOF
 ${GITLAB_LOG_DIR}/gitlab-shell/*.log {
-  weekly
+  size 100M
   missingok
-  rotate 52
+  rotate 3
   compress
-  delaycompress
   notifempty
   copytruncate
 }
@@ -251,11 +248,10 @@ EOF
 # configure gitlab vhost log rotation
 cat > /etc/logrotate.d/gitlab-nginx <<EOF
 ${GITLAB_LOG_DIR}/nginx/*.log {
-  weekly
+  size 100M
   missingok
-  rotate 52
+  rotate 3
   compress
-  delaycompress
   notifempty
   copytruncate
 }
@@ -386,3 +382,51 @@ EOF
 # purge build dependencies and cleanup apt
 DEBIAN_FRONTEND=noninteractive apt-get purge -y --auto-remove ${BUILD_DEPENDENCIES}
 rm -rf /var/lib/apt/lists/*
+
+# avoid fast growing of sidekiq.log
+ORIGINAL='\nSidekiq.configure_server do |config|\n'
+REPLACEMENT=$(sed -z 's/[&/\]/\\&/g ; s/\n/\\n/g'<<\EOF
+
+class LessVerboseJobLogger
+  def call(item, queue)
+    start = Time.now
+    logger.debug("start")
+    yield
+    logger.debug("done: #{elapsed(start)} sec")
+  rescue Exception
+    logger.debug("fail: #{elapsed(start)} sec")
+    raise
+  end
+
+  private
+
+  def elapsed(start)
+    (Time.now - start).round(3)
+  end
+
+  def logger
+    Sidekiq.logger
+  end
+end
+
+Sidekiq.configure_server do |config|
+  config.options[:job_logger] = LessVerboseJobLogger
+EOF
+)
+
+exec_as_git sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q42" "${GITLAB_INSTALL_DIR}/config/initializers/sidekiq.rb"
+
+# avoid supervisord rotating logfiles before logrotate
+ORIGINAL='\n\[supervisord\]\n'
+REPLACEMENT=$(sed -z 's/[&/\]/\\&/g ; s/\n/\\n/g'<<\EOF
+
+[supervisord]
+logfile_maxbytes=500MB
+logfile_backups=1
+EOF
+)
+
+sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q43" '/etc/supervisor/supervisord.conf'
+
+# run logrotate every hour
+mv -n /etc/cron.daily/logrotate /etc/cron.hourly/
