@@ -5,6 +5,7 @@ https://gitlab.com/gitlab-org/gitlab-ce/blob/master/CHANGELOG.md) for the list o
 
 **10.7.3**
 - gitlab: upgrade CE to v10.7.3
+- golang: update to 1.9.6
 
 **10.7.2**
 - gitlab: upgrade CE to v10.7.2
