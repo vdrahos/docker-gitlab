@@ -1,5 +1,5 @@
-FROM sameersbn/ubuntu:16.04.20180124
-LABEL maintainer="sameer@damagehead.com"
+FROM sameersbn/ubuntu:16.04.20180124 as docker-gitlab-base
+LABEL maintainer="jklos@netsuite.com"
 
 ENV GITLAB_VERSION=10.7.3 \
     RUBY_VERSION=2.3 \
@@ -36,8 +36,8 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv E1DD270288B4E60
  && echo 'deb https://deb.nodesource.com/node_8.x xenial main' > /etc/apt/sources.list.d/nodesource.list \
  && wget --quiet -O - https://dl.yarnpkg.com/debian/pubkey.gpg  | apt-key add - \
  && echo 'deb https://dl.yarnpkg.com/debian/ stable main' > /etc/apt/sources.list.d/yarn.list \
- && apt-get update \
- && DEBIAN_FRONTEND=noninteractive apt-get install -y supervisor logrotate locales curl \
+ && apt-get update -o Acquire::Retries=3 \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -o Acquire::Retries=3 -y supervisor logrotate locales curl \
       nginx openssh-server mysql-client postgresql-client redis-tools \
       git-core ruby${RUBY_VERSION} python2.7 python-docutils nodejs yarn gettext-base \
       libmysqlclient20 libpq5 zlib1g libyaml-0-2 libssl1.0.0 \
@@ -64,3 +64,18 @@ VOLUME ["${GITLAB_DATA_DIR}", "${GITLAB_LOG_DIR}"]
 WORKDIR ${GITLAB_INSTALL_DIR}
 ENTRYPOINT ["/sbin/entrypoint.sh"]
 CMD ["app:start"]
+
+FROM docker-gitlab-base as nsws4py-builder
+RUN apt-get update \
+    && apt-get -y install gcc make python3-dev libxml2-dev libxslt1-dev zlib1g-dev python3-pip python3-venv \
+    && python3 -m venv /home/git/githook_env/ \
+    && /home/git/githook_env/bin/pip3 install wheel \
+    && /home/git/githook_env/bin/pip3 install --extra-index-url https://pypi.eng.netsuite.com/simple/ nsws4py \
+    && rm -rf /var/lib/apt/lists/*
+
+FROM docker-gitlab-base
+RUN apt-get update \
+    && apt-get -y install python3-venv python3-pip \
+    && python3 -m venv /home/git/githook_env/ \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=nsws4py-builder /home/git/githook_env/lib /home/git/githook_env/lib
