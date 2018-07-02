@@ -74,5 +74,4 @@ RUN apt-get update \
     && /home/git/githook_env/bin/pip3 uninstall -y pip pkg-resources setuptools \
     && apt-get -y remove python3-venv \
     && apt-get -y autoremove \
-    && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/*
