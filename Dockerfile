@@ -67,11 +67,12 @@ CMD ["app:start"]
 
 FROM docker-gitlab-base
 RUN apt-get update \
-    && apt-get -y install python3-venv \
+    && apt-get -y install python3 python3-venv \
     && python3 -m venv /home/git/githook_env/ \
     && /home/git/githook_env/bin/pip3 install --upgrade pip \
     && /home/git/githook_env/bin/pip3 install --extra-index-url https://pypi.eng.netsuite.com/simple/ nsws4py \
     && /home/git/githook_env/bin/pip3 uninstall -y pip pkg-resources setuptools \
     && apt-get -y remove python3-venv \
-    && apt-get clean \
+    && apt-get -y autoremove \
+    && apt-get -y clean \
     && rm -rf /var/lib/apt/lists/*
