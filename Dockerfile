@@ -75,3 +75,4 @@ RUN apt-get update \
     && apt-get -y remove python3-venv \
     && apt-get -y autoremove \
     && rm -rf /var/lib/apt/lists/*
+CMD ["app:start"]
