@@ -146,8 +146,8 @@ exec_as_git cp ${GITLAB_INSTALL_DIR}/config/gitlab.yml.example ${GITLAB_INSTALL_
 exec_as_git cp ${GITLAB_INSTALL_DIR}/config/database.yml.mysql ${GITLAB_INSTALL_DIR}/config/database.yml
 
 # Installs nodejs packages required to compile webpack
-exec_as_git yarn install --production --pure-lockfile --network-timeout 20000
-exec_as_git yarn add ajv@^4.0.0 --network-timeout 20000
+exec_as_git yarn install --production --pure-lockfile --network-timeout 120000 --network-concurrency 4 --verbose
+exec_as_git yarn add ajv@^4.0.0 --network-timeout 120000 --network-concurrency 4 --verbose
 
 echo "Compiling assets. Please be patient, this could take a while..."
 exec_as_git bundle exec rake gitlab:assets:compile USE_DB=false SKIP_STORAGE_VALIDATION=true
