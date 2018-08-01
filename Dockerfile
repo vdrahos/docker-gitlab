@@ -1,13 +1,14 @@
-FROM sameersbn/ubuntu:16.04.20180706 as docker-gitlab-base
+FROM ubuntu:xenial-20180705 as docker-gitlab-base
+
 LABEL maintainer="jklos@netsuite.com"
 
-ENV GITLAB_VERSION=11.0.4 \
+ENV GITLAB_VERSION=11.1.3 \
     RUBY_VERSION=2.4 \
     GOLANG_VERSION=1.10.3 \
     GITLAB_SHELL_VERSION=7.1.4 \
-    GITLAB_WORKHORSE_VERSION=4.3.1 \
-    GITLAB_PAGES_VERSION=0.9.1 \
-    GITALY_SERVER_VERSION=0.105.0 \
+    GITLAB_WORKHORSE_VERSION=5.0.0 \
+    GITLAB_PAGES_VERSION=1.0.0 \
+    GITALY_SERVER_VERSION=0.111.2 \
     GITLAB_USER="git" \
     GITLAB_HOME="/home/git" \
     GITLAB_LOG_DIR="/var/log/gitlab" \
@@ -24,7 +25,10 @@ ENV GITLAB_INSTALL_DIR="${GITLAB_HOME}/gitlab" \
     GITLAB_BUILD_DIR="${GITLAB_CACHE_DIR}/build" \
     GITLAB_RUNTIME_DIR="${GITLAB_CACHE_DIR}/runtime"
 
-RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv E1DD270288B4E6030699E45FA1715D88E1DF1F24 \
+RUN apt-get update \
+ && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
+      wget ca-certificates apt-transport-https \
+ && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv E1DD270288B4E6030699E45FA1715D88E1DF1F24 \
  && echo "deb http://ppa.launchpad.net/git-core/ppa/ubuntu xenial main" >> /etc/apt/sources.list \
  && apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 80F70E11F0F0D5F10CB20E62F5DA5F09C3173AA6 \
  && echo "deb http://ppa.launchpad.net/brightbox/ruby-ng/ubuntu xenial main" >> /etc/apt/sources.list \
@@ -37,14 +41,13 @@ RUN apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv E1DD270288B4E60
  && wget --quiet -O - https://dl.yarnpkg.com/debian/pubkey.gpg  | apt-key add - \
  && echo 'deb https://dl.yarnpkg.com/debian/ stable main' > /etc/apt/sources.list.d/yarn.list \
  && apt-get update -o Acquire::Retries=3 \
- && DEBIAN_FRONTEND=noninteractive apt-get install -o Acquire::Retries=3 -y supervisor logrotate locales curl \
+ && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y -o Acquire::Retries=3 \
+      sudo supervisor logrotate locales curl \
       nginx openssh-server mysql-client postgresql-client redis-tools \
-      git-core ruby${RUBY_VERSION} python2.7 python-docutils nodejs yarn gettext-base \
+      git-core gnupg2 ruby${RUBY_VERSION} python2.7 python-docutils nodejs yarn gettext-base \
       libmysqlclient20 libpq5 zlib1g libyaml-0-2 libssl1.0.0 \
       libgdbm3 libreadline6 libncurses5 libffi6 \
-      libxml2 libxslt1.1 libcurl3 libicu55 \
-      libre2-dev \
-      tzdata \
+      libxml2 libxslt1.1 libcurl3 libicu55 libre2-dev tzdata unzip \
  && update-locale LANG=C.UTF-8 LC_MESSAGES=POSIX \
  && locale-gen en_US.UTF-8 \
  && DEBIAN_FRONTEND=noninteractive dpkg-reconfigure locales \

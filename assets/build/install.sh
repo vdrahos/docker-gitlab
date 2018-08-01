@@ -27,7 +27,7 @@ exec_as_git() {
 
 # install build dependencies for gem installation
 apt-get update -o Acquire::Retries=3
-DEBIAN_FRONTEND=noninteractive apt-get install -o Acquire::Retries=3 -y ${BUILD_DEPENDENCIES}
+DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ${BUILD_DEPENDENCIES} -o Acquire::Retries=3
 
 # PaX-mark ruby
 # Applying the mark late here does make the build usable on PaX kernels, but
@@ -382,6 +382,9 @@ EOF
 # purge build dependencies and cleanup apt
 DEBIAN_FRONTEND=noninteractive apt-get purge -y --auto-remove ${BUILD_DEPENDENCIES}
 rm -rf /var/lib/apt/lists/*
+
+# clean up caches
+exec_as_git rm -rf ${GITLAB_HOME}/.cache
 
 # avoid fast growing of sidekiq.log
 ORIGINAL='\nSidekiq.configure_server do |config|\n'
