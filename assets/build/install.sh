@@ -269,7 +269,9 @@ autostart=true
 autorestart=true
 stopsignal=QUIT
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stderr_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
+stdout_logfile_maxbytes=500MB
+stdout_logfile_backups=1
+redirect_stderr=true
 EOF
 
 # configure supervisord to start sidekiq
@@ -288,7 +290,9 @@ user=git
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stderr_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
+stdout_logfile_maxbytes=500MB
+stdout_logfile_backups=1
+redirect_stderr=true
 EOF
 
 # configure supervisord to start gitlab-workhorse
@@ -309,7 +313,9 @@ user=git
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_INSTALL_DIR}/log/%(program_name)s.log
-stderr_logfile=${GITLAB_INSTALL_DIR}/log/%(program_name)s.log
+stdout_logfile_maxbytes=500MB
+stdout_logfile_backups=1
+redirect_stderr=true
 EOF
 
 # configure supervisord to start gitaly
@@ -323,7 +329,9 @@ user=git
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stderr_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
+stdout_logfile_maxbytes=500MB
+stdout_logfile_backups=1
+redirect_stderr=true
 EOF
 
 # configure supervisord to start mail_room
@@ -337,7 +345,9 @@ user=git
 autostart={{GITLAB_INCOMING_EMAIL_ENABLED}}
 autorestart=true
 stdout_logfile=${GITLAB_INSTALL_DIR}/log/%(program_name)s.log
-stderr_logfile=${GITLAB_INSTALL_DIR}/log/%(program_name)s.log
+stdout_logfile_maxbytes=500MB
+stdout_logfile_backups=1
+redirect_stderr=true
 EOF
 
 # configure supervisor to start sshd
@@ -350,7 +360,9 @@ user=root
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stderr_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
+stdout_logfile_maxbytes=500MB
+stdout_logfile_backups=1
+redirect_stderr=true
 EOF
 
 # configure supervisord to start nginx
@@ -363,7 +375,9 @@ user=root
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stderr_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
+stdout_logfile_maxbytes=500MB
+stdout_logfile_backups=1
+redirect_stderr=true
 EOF
 
 # configure supervisord to start crond
@@ -376,7 +390,9 @@ user=root
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stderr_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
+stdout_logfile_maxbytes=500MB
+stdout_logfile_backups=1
+redirect_stderr=true
 EOF
 
 # purge build dependencies and cleanup apt
