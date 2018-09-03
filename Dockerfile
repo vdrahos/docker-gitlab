@@ -1,14 +1,14 @@
-FROM ubuntu:xenial-20180705 as docker-gitlab-base
+FROM ubuntu:xenial-20180808 as docker-gitlab-base
 
 LABEL maintainer="jklos@netsuite.com"
 
-ENV GITLAB_VERSION=11.1.4 \
+ENV GITLAB_VERSION=11.2.3 \
     RUBY_VERSION=2.4 \
     GOLANG_VERSION=1.10.3 \
-    GITLAB_SHELL_VERSION=7.1.4 \
-    GITLAB_WORKHORSE_VERSION=5.0.0 \
+    GITLAB_SHELL_VERSION=8.1.1 \
+    GITLAB_WORKHORSE_VERSION=5.1.0 \
     GITLAB_PAGES_VERSION=1.0.0 \
-    GITALY_SERVER_VERSION=0.111.2 \
+    GITALY_SERVER_VERSION=0.117.2 \
     GITLAB_USER="git" \
     GITLAB_HOME="/home/git" \
     GITLAB_LOG_DIR="/var/log/gitlab" \
@@ -18,8 +18,6 @@ ENV GITLAB_VERSION=11.1.4 \
 
 ENV GITLAB_INSTALL_DIR="${GITLAB_HOME}/gitlab" \
     GITLAB_SHELL_INSTALL_DIR="${GITLAB_HOME}/gitlab-shell" \
-    GITLAB_WORKHORSE_INSTALL_DIR="${GITLAB_HOME}/gitlab-workhorse" \
-    GITLAB_PAGES_INSTALL_DIR="${GITLAB_HOME}/gitlab-pages" \
     GITLAB_GITALY_INSTALL_DIR="${GITLAB_HOME}/gitaly" \
     GITLAB_DATA_DIR="${GITLAB_HOME}/data" \
     GITLAB_BUILD_DIR="${GITLAB_CACHE_DIR}/build" \
