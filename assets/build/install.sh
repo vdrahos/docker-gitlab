@@ -461,3 +461,6 @@ sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q43" '/etc/supervisor/supervisord.c
 
 # run logrotate every hour
 mv -n /etc/cron.daily/logrotate /etc/cron.hourly/
+
+# https://gitlab.com/gitlab-org/gitlab-ce/issues/50691
+ln -sf /usr/local/bin/gitaly-ssh /gitaly-ssh
