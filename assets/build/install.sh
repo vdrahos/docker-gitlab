@@ -133,6 +133,10 @@ rm -rf ${GITLAB_GITALY_BUILD_DIR}
 # remove go
 rm -rf ${GITLAB_BUILD_DIR}/go${GOLANG_VERSION}.linux-amd64.tar.gz ${GOROOT}
 
+# Fix for rebase in forks 
+echo "Linking $(which gitaly-ssh) to /"
+ln -s $(which gitaly-ssh) /
+
 # remove HSTS config from the default headers, we configure it in nginx
 exec_as_git sed -i "/headers\['Strict-Transport-Security'\]/d" ${GITLAB_INSTALL_DIR}/app/controllers/application_controller.rb
 
@@ -461,6 +465,3 @@ sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q43" '/etc/supervisor/supervisord.c
 
 # run logrotate every hour
 mv -n /etc/cron.daily/logrotate /etc/cron.hourly/
-
-# https://gitlab.com/gitlab-org/gitlab-ce/issues/50691
-ln -sf /usr/local/bin/gitaly-ssh /gitaly-ssh

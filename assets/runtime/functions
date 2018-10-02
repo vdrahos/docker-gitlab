@@ -859,7 +859,7 @@ gitlab_configure_backups() {
     GITLAB_BACKUP_ARCHIVE_PERMISSIONS
   gitlab_configure_backups_schedule
   if [[ ${AWS_BACKUPS} != true && ${GCS_BACKUPS} != true ]]; then
-    exec_as_git sed -i "/upload:/,/#end-gcs/d" ${GITLAB_CONFIG}
+    exec_as_git sed -i "/\s\+upload:/,/#end-gcs/d" ${GITLAB_CONFIG}
     return 0
   fi
   if [[ ${AWS_BACKUPS} == true && ${GCS_BACKUPS} == true ]]; then
@@ -1722,7 +1722,7 @@ execute_raketask() {
       echo
       for b in $(ls ${GITLAB_BACKUP_DIR} | grep _gitlab_backup | sort -r)
       do
-        echo "‣ $b (created at $(date --date="@${b%%_gitlab_backup.tar}" +'%d %b, %G - %H:%M:%S %Z'))"
+        echo "‣ $b (created at $(date --date="@${b%%_*_gitlab_backup.tar}" +'%d %b, %G - %H:%M:%S %Z'))"
       done
       echo
 
