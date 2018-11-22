@@ -1,8 +1,21 @@
 FROM ubuntu:xenial-20181005 as docker-gitlab-base
 
-LABEL maintainer="jklos@netsuite.com"
+ARG BUILD_DATE
+ARG VCS_REF
+ARG VERSION=11.4.6
 
-ENV GITLAB_VERSION=11.4.3 \
+LABEL \
+    maintainer="jklos@netsuite.com" \
+    org.label-schema.schema-version="1.0" \
+    org.label-schema.build-date=${BUILD_DATE} \
+    org.label-schema.name=gitlab \
+    org.label-schema.vendor=netsuite \
+    org.label-schema.url="https://gitlab.eng.netsuite.com/devops/ns-docker-gitlab" \
+    org.label-schema.vcs-url="https://gitlab.eng.netsuite.com/devops/ns-docker-gitlab.git" \
+    org.label-schema.vcs-ref=${VCS_REF} \
+    com.netsuite.gitlab.license=MIT
+
+ENV GITLAB_VERSION=${VERSION} \
     RUBY_VERSION=2.4 \
     GOLANG_VERSION=1.10.4 \
     GITLAB_SHELL_VERSION=8.3.3 \
