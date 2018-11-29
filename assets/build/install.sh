@@ -286,8 +286,7 @@ autostart=true
 autorestart=true
 stopsignal=QUIT
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stdout_logfile_maxbytes=500MB
-stdout_logfile_backups=1
+stdout_logfile_maxbytes=0
 redirect_stderr=true
 EOF
 
@@ -307,8 +306,7 @@ user=git
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stdout_logfile_maxbytes=500MB
-stdout_logfile_backups=1
+stdout_logfile_maxbytes=0
 redirect_stderr=true
 EOF
 
@@ -330,8 +328,7 @@ user=git
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_INSTALL_DIR}/log/%(program_name)s.log
-stdout_logfile_maxbytes=500MB
-stdout_logfile_backups=1
+stdout_logfile_maxbytes=0
 redirect_stderr=true
 EOF
 
@@ -346,8 +343,7 @@ user=git
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stdout_logfile_maxbytes=500MB
-stdout_logfile_backups=1
+stdout_logfile_maxbytes=0
 redirect_stderr=true
 EOF
 
@@ -362,8 +358,7 @@ user=git
 autostart={{GITLAB_INCOMING_EMAIL_ENABLED}}
 autorestart=true
 stdout_logfile=${GITLAB_INSTALL_DIR}/log/%(program_name)s.log
-stdout_logfile_maxbytes=500MB
-stdout_logfile_backups=1
+stdout_logfile_maxbytes=0
 redirect_stderr=true
 EOF
 
@@ -377,8 +372,7 @@ user=root
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stdout_logfile_maxbytes=500MB
-stdout_logfile_backups=1
+stdout_logfile_maxbytes=0
 redirect_stderr=true
 EOF
 
@@ -392,8 +386,7 @@ user=root
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stdout_logfile_maxbytes=500MB
-stdout_logfile_backups=1
+stdout_logfile_maxbytes=0
 redirect_stderr=true
 EOF
 
@@ -407,8 +400,7 @@ user=root
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stdout_logfile_maxbytes=500MB
-stdout_logfile_backups=1
+stdout_logfile_maxbytes=0
 redirect_stderr=true
 EOF
 
@@ -425,7 +417,7 @@ REPLACEMENT=$(sed -z 's/[&/\]/\\&/g ; s/\n/\\n/g'<<\EOF
 
 class LessVerboseJobLogger
   def call(item, queue)
-    start = Time.now
+    start = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
     logger.debug("start")
     yield
     logger.debug("done: #{elapsed(start)} sec")
@@ -437,7 +429,7 @@ class LessVerboseJobLogger
   private
 
   def elapsed(start)
-    (Time.now - start).round(3)
+    (::Process.clock_gettime(::Process::CLOCK_MONOTONIC) - start).round(3)
   end
 
   def logger
@@ -457,12 +449,8 @@ ORIGINAL='\n\[supervisord\]\n'
 REPLACEMENT=$(sed -z 's/[&/\]/\\&/g ; s/\n/\\n/g'<<\EOF
 
 [supervisord]
-logfile_maxbytes=500MB
-logfile_backups=1
+logfile_maxbytes=0
 EOF
 )
 
 sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q43" '/etc/supervisor/supervisord.conf'
-
-# run logrotate every hour
-mv -n /etc/cron.daily/logrotate /etc/cron.hourly/
