@@ -1,27 +1,16 @@
-FROM ubuntu:xenial-20181005 as docker-gitlab-base
+FROM ubuntu:xenial-20181113 as docker-gitlab-base
 
 ARG BUILD_DATE
 ARG VCS_REF
-ARG VERSION=11.4.6
-
-LABEL \
-    maintainer="jklos@netsuite.com" \
-    org.label-schema.schema-version="1.0" \
-    org.label-schema.build-date=${BUILD_DATE} \
-    org.label-schema.name=gitlab \
-    org.label-schema.vendor=netsuite \
-    org.label-schema.url="https://gitlab.eng.netsuite.com/devops/ns-docker-gitlab" \
-    org.label-schema.vcs-url="https://gitlab.eng.netsuite.com/devops/ns-docker-gitlab.git" \
-    org.label-schema.vcs-ref=${VCS_REF} \
-    com.netsuite.gitlab.license=MIT
+ARG VERSION=11.5.3
 
 ENV GITLAB_VERSION=${VERSION} \
-    RUBY_VERSION=2.4 \
-    GOLANG_VERSION=1.10.4 \
-    GITLAB_SHELL_VERSION=8.3.3 \
-    GITLAB_WORKHORSE_VERSION=7.0.0 \
-    GITLAB_PAGES_VERSION=1.1.0 \
-    GITALY_SERVER_VERSION=0.125.1 \
+    RUBY_VERSION=2.5 \
+    GOLANG_VERSION=1.10.5 \
+    GITLAB_SHELL_VERSION=8.4.1 \
+    GITLAB_WORKHORSE_VERSION=7.1.3 \
+    GITLAB_PAGES_VERSION=1.3.1 \
+    GITALY_SERVER_VERSION=0.129.0 \
     GITLAB_USER="git" \
     GITLAB_HOME="/home/git" \
     GITLAB_LOG_DIR="/var/log/gitlab" \
@@ -71,6 +60,17 @@ RUN bash ${GITLAB_BUILD_DIR}/install.sh
 COPY assets/runtime/ ${GITLAB_RUNTIME_DIR}/
 COPY entrypoint.sh /sbin/entrypoint.sh
 RUN chmod 755 /sbin/entrypoint.sh
+
+LABEL \
+    maintainer="jklos@netsuite.com" \
+    org.label-schema.schema-version="1.0" \
+    org.label-schema.build-date=${BUILD_DATE} \
+    org.label-schema.name=gitlab \
+    org.label-schema.vendor=netsuite \
+    org.label-schema.url="https://gitlab.eng.netsuite.com/devops/ns-docker-gitlab" \
+    org.label-schema.vcs-url="https://gitlab.eng.netsuite.com/devops/ns-docker-gitlab.git" \
+    org.label-schema.vcs-ref=${VCS_REF} \
+    com.netsuite.gitlab.license=MIT
 
 EXPOSE 22/tcp 80/tcp 443/tcp
 
