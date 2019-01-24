@@ -50,7 +50,7 @@ paxctl -Cm "$(command -v nodejs)"
 rm -rf /etc/ssh/ssh_host_*_key /etc/ssh/ssh_host_*_key.pub
 
 # add ${GITLAB_USER} user
-adduser --disabled-login --gecos 'GitLab' ${GITLAB_USER}
+adduser --disabled-login --uid 3042 --gecos 'GitLab' ${GITLAB_USER}
 passwd -d ${GITLAB_USER}
 
 # set PATH (fixes cron job PATH issues)
@@ -229,48 +229,48 @@ sed -i "s|^su root syslog$|su root root|" /etc/logrotate.conf
 # configure supervisord log rotation
 cat > /etc/logrotate.d/supervisord <<EOF
 ${GITLAB_LOG_DIR}/supervisor/*.log {
-  size 100M
-  missingok
-  rotate 3
+  daily
+  rotate 7
   compress
-  notifempty
-  copytruncate
+  dateext
+  dateyesterday
+  missingok
 }
 EOF
 
 # configure gitlab log rotation
 cat > /etc/logrotate.d/gitlab <<EOF
 ${GITLAB_LOG_DIR}/gitlab/*.log {
-  size 100M
-  missingok
-  rotate 3
+  daily
+  rotate 7
   compress
-  notifempty
-  copytruncate
+  dateext
+  dateyesterday
+  missingok
 }
 EOF
 
 # configure gitlab-shell log rotation
 cat > /etc/logrotate.d/gitlab-shell <<EOF
 ${GITLAB_LOG_DIR}/gitlab-shell/*.log {
-  size 100M
-  missingok
-  rotate 3
+  daily
+  rotate 7
   compress
-  notifempty
-  copytruncate
+  dateext
+  dateyesterday
+  missingok
 }
 EOF
 
 # configure gitlab vhost log rotation
 cat > /etc/logrotate.d/gitlab-nginx <<EOF
 ${GITLAB_LOG_DIR}/nginx/*.log {
-  size 100M
-  missingok
-  rotate 3
+  daily
+  rotate 7
   compress
-  notifempty
-  copytruncate
+  dateext
+  dateyesterday
+  missingok
 }
 EOF
 
@@ -411,6 +411,12 @@ rm -rf /var/lib/apt/lists/*
 # clean up caches
 exec_as_git rm -rf ${GITLAB_HOME}/.cache
 
+#remove useless cron entries
+rm /etc/cron.weekly/fstrim
+rm /etc/cron.daily/apt-compat
+rm /etc/cron.daily/dpkg
+rm /etc/cron.daily/passwd
+
 # avoid fast growing of sidekiq.log
 ORIGINAL='\nSidekiq.configure_server do |config|\n'
 REPLACEMENT=$(sed -z 's/[&/\]/\\&/g ; s/\n/\\n/g'<<\EOF
@@ -442,7 +448,7 @@ Sidekiq.configure_server do |config|
 EOF
 )
 
-exec_as_git sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q42" "${GITLAB_INSTALL_DIR}/config/initializers/sidekiq.rb"
+sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q42" "${GITLAB_INSTALL_DIR}/config/initializers/sidekiq.rb"
 
 # avoid supervisord rotating logfiles before logrotate
 ORIGINAL='\n\[supervisord\]\n'
@@ -453,4 +459,7 @@ logfile_maxbytes=0
 EOF
 )
 
-sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q43" '/etc/supervisor/supervisord.conf'
+sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q43" /etc/supervisor/supervisord.conf
+
+# run logrotate at midnight
+sed -i 's|^25 6\t\* \* \*| 0 0\t* * *|' /etc/crontab

@@ -1249,7 +1249,11 @@ update_ca_certificates() {
 }
 
 initialize_logdir() {
-  echo "Initializing logdir..."
+  echo "Initializing system logdirs..."
+  mkdir -p /var/log/supervisor
+  mkdir -p /var/log/nginx
+
+  echo "Initializing GitLab logdirs..."
   mkdir -p ${GITLAB_LOG_DIR}/supervisor
   chmod -R 0755 ${GITLAB_LOG_DIR}/supervisor
   chown -R root: ${GITLAB_LOG_DIR}/supervisor
