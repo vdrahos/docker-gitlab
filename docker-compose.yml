@@ -22,7 +22,7 @@ services:
 
   gitlab:
     restart: always
-    image: sameersbn/gitlab:11.5.3
+    image: sameersbn/gitlab:11.6.5
     depends_on:
     - redis
     - postgresql
@@ -134,6 +134,7 @@ services:
     - OAUTH_SAML_EXTERNAL_GROUPS=
     - OAUTH_SAML_ATTRIBUTE_STATEMENTS_EMAIL=
     - OAUTH_SAML_ATTRIBUTE_STATEMENTS_NAME=
+    - OAUTH_SAML_ATTRIBUTE_STATEMENTS_USERNAME=
     - OAUTH_SAML_ATTRIBUTE_STATEMENTS_FIRST_NAME=
     - OAUTH_SAML_ATTRIBUTE_STATEMENTS_LAST_NAME=
 

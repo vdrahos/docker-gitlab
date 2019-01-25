@@ -1,16 +1,16 @@
-FROM ubuntu:xenial-20181113 as docker-gitlab-base
+FROM ubuntu:xenial-20181218 as docker-gitlab-base
 
 ARG BUILD_DATE
 ARG VCS_REF
-ARG VERSION=11.5.3
+ARG VERSION=11.6.5
 
 ENV GITLAB_VERSION=${VERSION} \
     RUBY_VERSION=2.5 \
-    GOLANG_VERSION=1.10.5 \
-    GITLAB_SHELL_VERSION=8.4.1 \
-    GITLAB_WORKHORSE_VERSION=7.1.3 \
+    GOLANG_VERSION=1.11.4 \
+    GITLAB_SHELL_VERSION=8.4.3 \
+    GITLAB_WORKHORSE_VERSION=7.6.0 \
     GITLAB_PAGES_VERSION=1.3.1 \
-    GITALY_SERVER_VERSION=0.129.0 \
+    GITALY_SERVER_VERSION=1.7.1 \
     GITLAB_USER="git" \
     GITLAB_HOME="/home/git" \
     GITLAB_LOG_DIR="/var/log/gitlab" \
@@ -51,7 +51,7 @@ RUN apt-get update \
  && update-locale LANG=C.UTF-8 LC_MESSAGES=POSIX \
  && locale-gen en_US.UTF-8 \
  && DEBIAN_FRONTEND=noninteractive dpkg-reconfigure locales \
- && gem install --no-document bundler \
+ && gem install --no-document bundler -v 1.17.3 \
  && rm -rf /var/lib/apt/lists/*
 
 COPY assets/build/ ${GITLAB_BUILD_DIR}/
