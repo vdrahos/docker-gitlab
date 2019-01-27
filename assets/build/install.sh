@@ -467,3 +467,6 @@ sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q43" /etc/supervisor/supervisord.co
 
 # run logrotate at midnight
 sed -i 's|^25 6\t\* \* \*| 0 0\t* * *|' /etc/crontab
+
+# persist logrotate state
+ln -s /var/log/logrotate_status /var/lib/logrotate/status
