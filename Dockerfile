@@ -1,8 +1,8 @@
-FROM ubuntu:xenial-20190122 as docker-gitlab-base
+FROM ubuntu:xenial-20190222 as docker-gitlab-base
 
 ARG BUILD_DATE
 ARG VCS_REF
-ARG VERSION=11.8.2
+ARG VERSION=11.8.3
 
 ENV GITLAB_VERSION=${VERSION} \
     RUBY_VERSION=2.5 \
