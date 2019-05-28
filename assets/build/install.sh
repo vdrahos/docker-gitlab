@@ -237,7 +237,6 @@ ${GITLAB_LOG_DIR}/supervisor/*.log {
   dateext
   dateyesterday
   missingok
-  copytruncate
 }
 EOF
 
@@ -250,7 +249,6 @@ ${GITLAB_LOG_DIR}/gitlab/*.log {
   dateext
   dateyesterday
   missingok
-  copytruncate
 }
 EOF
 
@@ -263,7 +261,6 @@ ${GITLAB_LOG_DIR}/gitlab-shell/*.log {
   dateext
   dateyesterday
   missingok
-  copytruncate
 }
 EOF
 
@@ -276,7 +273,6 @@ ${GITLAB_LOG_DIR}/nginx/*.log {
   dateext
   dateyesterday
   missingok
-  copytruncate
 }
 EOF
 
