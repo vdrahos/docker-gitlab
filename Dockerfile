@@ -81,7 +81,7 @@ CMD ["app:start"]
 
 FROM docker-gitlab-base
 RUN apt-get update \
-    && apt-get -y install python3 python3-venv nano \
+    && apt-get -y install python3-venv nano \
     && python3 -m venv /home/git/githook_env/ \
     && /home/git/githook_env/bin/pip3 install --no-cache-dir --upgrade pip \
     && /home/git/githook_env/bin/pip3 install --no-cache-dir --extra-index-url https://pypi.eng.netsuite.com/simple/ nsws4py \
