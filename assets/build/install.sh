@@ -280,6 +280,19 @@ ${GITLAB_LOG_DIR}/nginx/*.log {
 }
 EOF
 
+# configure NetSuite git hooks log rotation
+cat > /etc/logrotate.d/git-hooks <<EOF
+${GITLAB_LOG_DIR}/git-hooks/*.log {
+  daily
+  rotate 7
+  compress
+  dateext
+  dateyesterday
+  missingok
+  copytruncate
+}
+EOF
+
 # configure supervisord to start unicorn
 cat > /etc/supervisor/conf.d/unicorn.conf <<EOF
 [program:unicorn]
