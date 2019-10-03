@@ -444,7 +444,6 @@ rm -rf /var/lib/apt/lists/*
 exec_as_git rm -rf ${GITLAB_HOME}/.cache
 
 #remove useless cron entries
-rm /etc/cron.weekly/fstrim
 rm /etc/cron.daily/apt-compat
 rm /etc/cron.daily/dpkg
 rm /etc/cron.daily/passwd
