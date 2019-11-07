@@ -58,12 +58,13 @@ cat >> ${GITLAB_HOME}/.profile <<EOF
 PATH=/usr/local/sbin:/usr/local/bin:\$PATH
 EOF
 
-# configure git for ${GITLAB_USER}
-exec_as_git git config --global core.autocrlf input
-exec_as_git git config --global gc.auto 0
-exec_as_git git config --global repack.writeBitmaps true
-exec_as_git git config --global receive.advertisePushOptions true
-
+# configure /etc/gitconfig (so we do not override this with .gitconfig from docker volume)
+git config --system core.autocrlf input
+git config --system gc.auto 0
+git config --system repack.writeBitmaps true
+git config --system receive.advertisePushOptions true
+# supply git user gitconfig from docker volume
+exec_as_git ln -s ${GITLAB_HOME}/data/gitlab-gitconfig ${GITLAB_HOME}/.gitconfig
 
 # shallow clone gitlab-foss
 echo "Cloning gitlab-foss v.${GITLAB_VERSION}..."
