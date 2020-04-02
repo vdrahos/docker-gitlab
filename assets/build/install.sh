@@ -35,8 +35,8 @@ exec_as_git() {
 }
 
 # install build dependencies for gem installation
-apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ${BUILD_DEPENDENCIES}
+apt-get update -o Acquire::Retries=3
+DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ${BUILD_DEPENDENCIES} -o Acquire::Retries=3
 
 # PaX-mark ruby
 # Applying the mark late here does make the build usable on PaX kernels, but
@@ -50,7 +50,7 @@ paxctl -cvm "$(command -v nodejs)"
 rm -rf /etc/ssh/ssh_host_*_key /etc/ssh/ssh_host_*_key.pub
 
 # add ${GITLAB_USER} user
-adduser --disabled-login --gecos 'GitLab' ${GITLAB_USER}
+adduser --disabled-login --uid 3042 --gecos 'GitLab' ${GITLAB_USER}
 passwd -d ${GITLAB_USER}
 
 # set PATH (fixes cron job PATH issues)
@@ -58,12 +58,13 @@ cat >> ${GITLAB_HOME}/.profile <<EOF
 PATH=/usr/local/sbin:/usr/local/bin:\$PATH
 EOF
 
-# configure git for ${GITLAB_USER}
-exec_as_git git config --global core.autocrlf input
-exec_as_git git config --global gc.auto 0
-exec_as_git git config --global repack.writeBitmaps true
-exec_as_git git config --global receive.advertisePushOptions true
-
+# configure /etc/gitconfig (so we do not override this with .gitconfig from docker volume)
+git config --system core.autocrlf input
+git config --system gc.auto 0
+git config --system repack.writeBitmaps true
+git config --system receive.advertisePushOptions true
+# supply git user gitconfig from docker volume
+exec_as_git ln -s ${GITLAB_HOME}/data/gitlab-gitconfig ${GITLAB_HOME}/.gitconfig
 
 # shallow clone gitlab-foss
 echo "Cloning gitlab-foss v.${GITLAB_VERSION}..."
@@ -171,8 +172,8 @@ exec_as_git cp ${GITLAB_INSTALL_DIR}/config/gitlab.yml.example ${GITLAB_INSTALL_
 exec_as_git cp ${GITLAB_INSTALL_DIR}/config/database.yml.postgresql ${GITLAB_INSTALL_DIR}/config/database.yml
 
 # Installs nodejs packages required to compile webpack
-exec_as_git yarn install --production --pure-lockfile
-exec_as_git yarn add ajv@^4.0.0
+exec_as_git yarn install --production --pure-lockfile --network-timeout 120000 --network-concurrency 4
+exec_as_git yarn add ajv@^4.0.0 --network-timeout 120000 --network-concurrency 4
 
 echo "Compiling assets. Please be patient, this could take a while..."
 exec_as_git bundle exec rake gitlab:assets:compile USE_DB=false SKIP_STORAGE_VALIDATION=true NODE_OPTIONS="--max-old-space-size=4096"
@@ -238,12 +239,12 @@ sed -i "s|^su root syslog$|su root root|" /etc/logrotate.conf
 # configure supervisord log rotation
 cat > /etc/logrotate.d/supervisord <<EOF
 ${GITLAB_LOG_DIR}/supervisor/*.log {
-  weekly
-  missingok
-  rotate 52
+  daily
+  rotate 7
   compress
-  delaycompress
-  notifempty
+  dateext
+  dateyesterday
+  missingok
   copytruncate
 }
 EOF
@@ -251,12 +252,12 @@ EOF
 # configure gitlab log rotation
 cat > /etc/logrotate.d/gitlab <<EOF
 ${GITLAB_LOG_DIR}/gitlab/*.log {
-  weekly
-  missingok
-  rotate 52
+  daily
+  rotate 7
   compress
-  delaycompress
-  notifempty
+  dateext
+  dateyesterday
+  missingok
   copytruncate
 }
 EOF
@@ -264,12 +265,12 @@ EOF
 # configure gitlab-shell log rotation
 cat > /etc/logrotate.d/gitlab-shell <<EOF
 ${GITLAB_LOG_DIR}/gitlab-shell/*.log {
-  weekly
-  missingok
-  rotate 52
+  daily
+  rotate 7
   compress
-  delaycompress
-  notifempty
+  dateext
+  dateyesterday
+  missingok
   copytruncate
 }
 EOF
@@ -277,12 +278,25 @@ EOF
 # configure gitlab vhost log rotation
 cat > /etc/logrotate.d/gitlab-nginx <<EOF
 ${GITLAB_LOG_DIR}/nginx/*.log {
-  weekly
-  missingok
-  rotate 52
+  daily
+  rotate 7
   compress
-  delaycompress
-  notifempty
+  dateext
+  dateyesterday
+  missingok
+  copytruncate
+}
+EOF
+
+# configure NetSuite git hooks log rotation
+cat > /etc/logrotate.d/git-hooks <<EOF
+${GITLAB_LOG_DIR}/git-hooks/*.log {
+  daily
+  rotate 7
+  compress
+  dateext
+  dateyesterday
+  missingok
   copytruncate
 }
 EOF
@@ -299,7 +313,8 @@ autostart=true
 autorestart=true
 stopsignal=QUIT
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stderr_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
+stdout_logfile_maxbytes=0
+redirect_stderr=true
 EOF
 
 # configure supervisord to start sidekiq
@@ -318,7 +333,8 @@ user=git
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stderr_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
+stdout_logfile_maxbytes=0
+redirect_stderr=true
 EOF
 
 # configure supervisord to start gitlab-workhorse
@@ -339,7 +355,8 @@ user=git
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_INSTALL_DIR}/log/%(program_name)s.log
-stderr_logfile=${GITLAB_INSTALL_DIR}/log/%(program_name)s.log
+stdout_logfile_maxbytes=0
+redirect_stderr=true
 EOF
 
 # configure supervisord to start gitaly
@@ -353,7 +370,8 @@ user=git
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stderr_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
+stdout_logfile_maxbytes=0
+redirect_stderr=true
 EOF
 
 # configure supervisord to start mail_room
@@ -367,7 +385,8 @@ user=git
 autostart={{GITLAB_INCOMING_EMAIL_ENABLED}}
 autorestart=true
 stdout_logfile=${GITLAB_INSTALL_DIR}/log/%(program_name)s.log
-stderr_logfile=${GITLAB_INSTALL_DIR}/log/%(program_name)s.log
+stdout_logfile_maxbytes=0
+redirect_stderr=true
 EOF
 
 # configure supervisor to start sshd
@@ -380,7 +399,8 @@ user=root
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stderr_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
+stdout_logfile_maxbytes=0
+redirect_stderr=true
 EOF
 
 # configure supervisord to start nginx
@@ -393,7 +413,8 @@ user=root
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stderr_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
+stdout_logfile_maxbytes=0
+redirect_stderr=true
 EOF
 
 # configure supervisord to start crond
@@ -406,7 +427,8 @@ user=root
 autostart=true
 autorestart=true
 stdout_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
-stderr_logfile=${GITLAB_LOG_DIR}/supervisor/%(program_name)s.log
+stdout_logfile_maxbytes=0
+redirect_stderr=true
 EOF
 
 
@@ -428,3 +450,55 @@ rm -rf /var/lib/apt/lists/*
 
 # clean up caches
 exec_as_git rm -rf ${GITLAB_HOME}/.cache
+
+#remove useless cron entries
+rm /etc/cron.daily/apt-compat
+rm /etc/cron.daily/dpkg
+rm /etc/cron.daily/passwd
+
+# avoid fast growing of sidekiq.log
+ORIGINAL='\nSidekiq.configure_server do |config|\n'
+REPLACEMENT=$(sed -z 's/[&/\]/\\&/g ; s/\n/\\n/g'<<\EOF
+
+class LessVerboseJobLogger
+  def call(item, queue)
+    start = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
+    logger.debug("start")
+    yield
+    logger.debug("done: #{elapsed(start)} sec")
+  rescue Exception
+    logger.debug("fail: #{elapsed(start)} sec")
+    raise
+  end
+
+  private
+
+  def elapsed(start)
+    (::Process.clock_gettime(::Process::CLOCK_MONOTONIC) - start).round(3)
+  end
+
+  def logger
+    Sidekiq.logger
+  end
+end
+
+Sidekiq.configure_server do |config|
+  config.options[:job_logger] = LessVerboseJobLogger
+EOF
+)
+
+sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q42" "${GITLAB_INSTALL_DIR}/config/initializers/sidekiq.rb"
+
+# avoid supervisord rotating logfiles before logrotate
+ORIGINAL='\n\[supervisord\]\n'
+REPLACEMENT=$(sed -z 's/[&/\]/\\&/g ; s/\n/\\n/g'<<\EOF
+
+[supervisord]
+logfile_maxbytes=0
+EOF
+)
+
+sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q43" /etc/supervisor/supervisord.conf
+
+# run logrotate at midnight
+sed -i 's|^25 6\t\* \* \*| 0 0\t* * *|' /etc/crontab

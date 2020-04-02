@@ -43,7 +43,7 @@ RUN set -ex && \
  && echo 'deb https://dl.yarnpkg.com/debian/ stable main' > /etc/apt/sources.list.d/yarn.list \
  && set -ex \
  && apt-get update \
- && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
+ && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y -o Acquire::Retries=3 \
       sudo supervisor logrotate locales curl \
       nginx openssh-server postgresql-client-10 postgresql-contrib-10 redis-tools \
       git-core ruby${RUBY_VERSION} python3 python3-docutils nodejs yarn gettext-base graphicsmagick \
@@ -64,19 +64,31 @@ COPY entrypoint.sh /sbin/entrypoint.sh
 RUN chmod 755 /sbin/entrypoint.sh
 
 LABEL \
-    maintainer="sameer@damagehead.com" \
+    maintainer="jklos@netsuite.com" \
     org.label-schema.schema-version="1.0" \
     org.label-schema.build-date=${BUILD_DATE} \
     org.label-schema.name=gitlab \
-    org.label-schema.vendor=damagehead \
-    org.label-schema.url="https://github.com/sameersbn/docker-gitlab" \
-    org.label-schema.vcs-url="https://github.com/sameersbn/docker-gitlab.git" \
+    org.label-schema.vendor=netsuite \
+    org.label-schema.url="https://gitlab.eng.netsuite.com/devops/ns-docker-gitlab" \
+    org.label-schema.vcs-url="https://gitlab.eng.netsuite.com/devops/ns-docker-gitlab.git" \
     org.label-schema.vcs-ref=${VCS_REF} \
-    com.damagehead.gitlab.license=MIT
+    com.netsuite.gitlab.license=MIT
 
 EXPOSE 22/tcp 80/tcp 443/tcp
 
 VOLUME ["${GITLAB_DATA_DIR}", "${GITLAB_LOG_DIR}"]
 WORKDIR ${GITLAB_INSTALL_DIR}
 ENTRYPOINT ["/sbin/entrypoint.sh"]
+CMD ["app:start"]
+
+FROM docker-gitlab-base
+RUN apt-get update \
+    && apt-get -y install python3-venv nano \
+    && python3 -m venv /home/git/githook_env/ \
+    && /home/git/githook_env/bin/pip3 install --no-cache-dir --upgrade pip \
+    && /home/git/githook_env/bin/pip3 install --no-cache-dir --extra-index-url https://pypi.eng.netsuite.com/simple/ nsws4py \
+    && /home/git/githook_env/bin/pip3 uninstall -y pip pkg-resources setuptools \
+    && apt-get -y remove python3-venv \
+    && apt-get -y autoremove \
+    && rm -rf /var/lib/apt/lists/*
 CMD ["app:start"]
