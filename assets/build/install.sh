@@ -72,7 +72,7 @@ exec_as_git git clone -q -b v${GITLAB_VERSION} --depth 1 ${GITLAB_CLONE_URL} ${G
 
 if [[ -d "${GITLAB_BUILD_DIR}/patches" ]]; then
 echo "Applying patches for gitlab-foss..."
-exec_as_git git -C ${GITLAB_INSTALL_DIR} apply --ignore-whitespace < ${GITLAB_BUILD_DIR}/patches/*.patch
+cat ${GITLAB_BUILD_DIR}/patches/*.patch | exec_as_git git -C ${GITLAB_INSTALL_DIR} apply --ignore-whitespace
 fi
 
 GITLAB_SHELL_VERSION=${GITLAB_SHELL_VERSION:-$(cat ${GITLAB_INSTALL_DIR}/GITLAB_SHELL_VERSION)}
