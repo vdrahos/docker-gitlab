@@ -1,16 +1,14 @@
-FROM ubuntu:bionic-20200311 as docker-gitlab-base
+FROM ubuntu:bionic-20200403 as docker-gitlab-base
 
-ARG BUILD_DATE
-ARG VCS_REF
-ARG VERSION=12.9.4
+ARG VERSION=12.10.6
 
 ENV GITLAB_VERSION=${VERSION} \
     RUBY_VERSION=2.6 \
     GOLANG_VERSION=1.13.10 \
-    GITLAB_SHELL_VERSION=12.0.0 \
-    GITLAB_WORKHORSE_VERSION=8.25.2 \
+    GITLAB_SHELL_VERSION=12.2.0 \
+    GITLAB_WORKHORSE_VERSION=8.30.1 \
     GITLAB_PAGES_VERSION=1.17.0 \
-    GITALY_SERVER_VERSION=12.9.4 \
+    GITALY_SERVER_VERSION=12.10.6 \
     GITLAB_USER="git" \
     GITLAB_HOME="/home/git" \
     GITLAB_LOG_DIR="/var/log/gitlab" \
@@ -63,8 +61,11 @@ COPY assets/runtime/ ${GITLAB_RUNTIME_DIR}/
 COPY entrypoint.sh /sbin/entrypoint.sh
 RUN chmod 755 /sbin/entrypoint.sh
 
+ARG BUILD_DATE
+ARG VCS_REF
+
 LABEL \
-    maintainer="jklos@netsuite.com" \
+    maintainer="vdrahos@netsuite.com" \
     org.label-schema.schema-version="1.0" \
     org.label-schema.build-date=${BUILD_DATE} \
     org.label-schema.name=gitlab \
