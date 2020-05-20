@@ -139,14 +139,6 @@ rm -rf ${GITLAB_GITALY_BUILD_DIR}
 # remove go
 rm -rf ${GITLAB_BUILD_DIR}/go${GOLANG_VERSION}.linux-amd64.tar.gz ${GOROOT}
 
-# Fix for rebase in forks 
-echo "Linking $(command -v gitaly-ssh) to /"
-ln -s "$(command -v gitaly-ssh)" /
-
-# Fix for gitaly-hooks
-echo "Linking $(command -v gitaly-hooks) to /"
-ln -s "$(command -v gitaly-hooks)" /
-
 # remove HSTS config from the default headers, we configure it in nginx
 exec_as_git sed -i "/headers\['Strict-Transport-Security'\]/d" ${GITLAB_INSTALL_DIR}/app/controllers/application_controller.rb
 
@@ -157,6 +149,7 @@ cd ${GITLAB_INSTALL_DIR}
 
 # install gems, use local cache if available
 if [[ -d ${GEM_CACHE_DIR} ]]; then
+  echo "Found local npm package cache..."
   mv ${GEM_CACHE_DIR} ${GITLAB_INSTALL_DIR}/vendor/cache
   chown -R ${GITLAB_USER}: ${GITLAB_INSTALL_DIR}/vendor/cache
 fi
@@ -271,6 +264,19 @@ ${GITLAB_LOG_DIR}/gitlab-shell/*.log {
   dateext
   dateyesterday
   missingok
+  copytruncate
+}
+EOF
+
+# configure gitlab log rotation
+cat > /etc/logrotate.d/gitaly <<EOF
+${GITLAB_LOG_DIR}/gitaly/*.log {
+  weekly
+  missingok
+  rotate 52
+  compress
+  delaycompress
+  notifempty
   copytruncate
 }
 EOF
@@ -448,56 +454,4 @@ DEBIAN_FRONTEND=noninteractive apt-get purge -y --auto-remove ${BUILD_DEPENDENCI
 rm -rf /var/lib/apt/lists/*
 
 # clean up caches
-exec_as_git rm -rf ${GITLAB_HOME}/.cache
 
-#remove useless cron entries
-rm /etc/cron.daily/apt-compat
-rm /etc/cron.daily/dpkg
-rm /etc/cron.daily/passwd
-
-# avoid fast growing of sidekiq.log
-ORIGINAL='\nSidekiq.configure_server do |config|\n'
-REPLACEMENT=$(sed -z 's/[&/\]/\\&/g ; s/\n/\\n/g'<<\EOF
-
-class LessVerboseJobLogger
-  def call(item, queue)
-    start = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC)
-    logger.debug("start")
-    yield
-    logger.debug("done: #{elapsed(start)} sec")
-  rescue Exception
-    logger.debug("fail: #{elapsed(start)} sec")
-    raise
-  end
-
-  private
-
-  def elapsed(start)
-    (::Process.clock_gettime(::Process::CLOCK_MONOTONIC) - start).round(3)
-  end
-
-  def logger
-    Sidekiq.logger
-  end
-end
-
-Sidekiq.configure_server do |config|
-  config.options[:job_logger] = LessVerboseJobLogger
-EOF
-)
-
-sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q42" "${GITLAB_INSTALL_DIR}/config/initializers/sidekiq.rb"
-
-# avoid supervisord rotating logfiles before logrotate
-ORIGINAL='\n\[supervisord\]\n'
-REPLACEMENT=$(sed -z 's/[&/\]/\\&/g ; s/\n/\\n/g'<<\EOF
-
-[supervisord]
-logfile_maxbytes=0
-EOF
-)
-
-sed -zi "s/${ORIGINAL}/${REPLACEMENT}/ ; t ; q43" /etc/supervisor/supervisord.conf
-
-# run logrotate at midnight
-sed -i 's|^25 6\t\* \* \*| 0 0\t* * *|' /etc/crontab
