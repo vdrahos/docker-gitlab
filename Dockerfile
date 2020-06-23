@@ -1,4 +1,4 @@
-FROM ubuntu:bionic-20200526
+FROM ubuntu:bionic-20200526 as docker-gitlab-base
 
 ARG VERSION=12.10.11
 
