@@ -1,14 +1,14 @@
-FROM ubuntu:bionic-20200403 as docker-gitlab-base
+FROM ubuntu:bionic-20200526 as docker-gitlab-base
 
-ARG VERSION=12.10.6
+ARG VERSION=12.10.11
 
 ENV GITLAB_VERSION=${VERSION} \
     RUBY_VERSION=2.6 \
     GOLANG_VERSION=1.13.10 \
     GITLAB_SHELL_VERSION=12.2.0 \
-    GITLAB_WORKHORSE_VERSION=8.30.1 \
+    GITLAB_WORKHORSE_VERSION=8.30.3 \
     GITLAB_PAGES_VERSION=1.17.0 \
-    GITALY_SERVER_VERSION=12.10.6 \
+    GITALY_SERVER_VERSION=12.10.11 \
     GITLAB_USER="git" \
     GITLAB_HOME="/home/git" \
     GITLAB_LOG_DIR="/var/log/gitlab" \
@@ -41,7 +41,7 @@ RUN set -ex && \
  && echo 'deb https://dl.yarnpkg.com/debian/ stable main' > /etc/apt/sources.list.d/yarn.list \
  && set -ex \
  && apt-get update \
- && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y -o Acquire::Retries=3 \
+ && DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y \
       sudo supervisor logrotate locales curl \
       nginx openssh-server postgresql-client-10 postgresql-contrib-10 redis-tools \
       git-core ruby${RUBY_VERSION} python3 python3-docutils nodejs yarn gettext-base graphicsmagick \

@@ -35,8 +35,8 @@ exec_as_git() {
 }
 
 # install build dependencies for gem installation
-apt-get update -o Acquire::Retries=3
-DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ${BUILD_DEPENDENCIES} -o Acquire::Retries=3
+apt-get update
+DEBIAN_FRONTEND=noninteractive apt-get install --no-install-recommends -y ${BUILD_DEPENDENCIES}
 
 # PaX-mark ruby
 # Applying the mark late here does make the build usable on PaX kernels, but
@@ -58,6 +58,7 @@ cat >> ${GITLAB_HOME}/.profile <<EOF
 PATH=/usr/local/sbin:/usr/local/bin:\$PATH
 EOF
 
+# configure git for ${GITLAB_USER}
 # configure /etc/gitconfig (so we do not override this with .gitconfig from docker volume)
 git config --system core.autocrlf input
 git config --system gc.auto 0
@@ -281,6 +282,19 @@ ${GITLAB_LOG_DIR}/gitaly/*.log {
 }
 EOF
 
+# configure gitlab log rotation
+cat > /etc/logrotate.d/gitaly <<EOF
+${GITLAB_LOG_DIR}/gitaly/*.log {
+  weekly
+  missingok
+  rotate 52
+  compress
+  delaycompress
+  notifempty
+  copytruncate
+}
+EOF
+
 # configure gitlab vhost log rotation
 cat > /etc/logrotate.d/gitlab-nginx <<EOF
 ${GITLAB_LOG_DIR}/nginx/*.log {
@@ -455,3 +469,4 @@ rm -rf /var/lib/apt/lists/*
 
 # clean up caches
 
+rm -rf ${GITLAB_HOME}/.cache ${GITLAB_HOME}/.bundle ${GITLAB_HOME}/go
