@@ -166,8 +166,8 @@ exec_as_git cp ${GITLAB_INSTALL_DIR}/config/gitlab.yml.example ${GITLAB_INSTALL_
 exec_as_git cp ${GITLAB_INSTALL_DIR}/config/database.yml.postgresql ${GITLAB_INSTALL_DIR}/config/database.yml
 
 # Installs nodejs packages required to compile webpack
-exec_as_git yarn install --production --pure-lockfile --network-timeout 120000 --network-concurrency 4
-exec_as_git yarn add ajv@^4.0.0 --network-timeout 120000 --network-concurrency 4
+exec_as_git yarn install --production --pure-lockfile
+exec_as_git yarn add ajv@^4.0.0
 
 echo "Compiling assets. Please be patient, this could take a while..."
 exec_as_git bundle exec rake gitlab:assets:compile USE_DB=false SKIP_STORAGE_VALIDATION=true NODE_OPTIONS="--max-old-space-size=4096"
@@ -234,7 +234,7 @@ sed -i "s|^su root syslog$|su root root|" /etc/logrotate.conf
 cat > /etc/logrotate.d/supervisord <<EOF
 ${GITLAB_LOG_DIR}/supervisor/*.log {
   daily
-  rotate 7
+  rotate 31
   compress
   dateext
   dateyesterday
@@ -247,7 +247,7 @@ EOF
 cat > /etc/logrotate.d/gitlab <<EOF
 ${GITLAB_LOG_DIR}/gitlab/*.log {
   daily
-  rotate 7
+  rotate 31
   compress
   dateext
   dateyesterday
@@ -260,7 +260,7 @@ EOF
 cat > /etc/logrotate.d/gitlab-shell <<EOF
 ${GITLAB_LOG_DIR}/gitlab-shell/*.log {
   daily
-  rotate 7
+  rotate 31
   compress
   dateext
   dateyesterday
@@ -272,25 +272,12 @@ EOF
 # configure gitlab log rotation
 cat > /etc/logrotate.d/gitaly <<EOF
 ${GITLAB_LOG_DIR}/gitaly/*.log {
-  weekly
-  missingok
-  rotate 52
+  daily
+  rotate 31
   compress
-  delaycompress
-  notifempty
-  copytruncate
-}
-EOF
-
-# configure gitlab log rotation
-cat > /etc/logrotate.d/gitaly <<EOF
-${GITLAB_LOG_DIR}/gitaly/*.log {
-  weekly
+  dateext
+  dateyesterday
   missingok
-  rotate 52
-  compress
-  delaycompress
-  notifempty
   copytruncate
 }
 EOF
@@ -299,7 +286,7 @@ EOF
 cat > /etc/logrotate.d/gitlab-nginx <<EOF
 ${GITLAB_LOG_DIR}/nginx/*.log {
   daily
-  rotate 7
+  rotate 31
   compress
   dateext
   dateyesterday
@@ -312,7 +299,7 @@ EOF
 cat > /etc/logrotate.d/git-hooks <<EOF
 ${GITLAB_LOG_DIR}/git-hooks/*.log {
   daily
-  rotate 7
+  rotate 31
   compress
   dateext
   dateyesterday
@@ -463,10 +450,20 @@ programs=sshd,nginx,mail_room,cron
 priority=20
 EOF
 
+# configure healthcheck script
+## https://docs.gitlab.com/ee/user/admin_area/monitoring/health_check.html
+cat > /usr/local/sbin/healthcheck <<EOF
+#!/bin/bash
+url=http://localhost/-/liveness
+options=( '--insecure' '--location' '--silent' )
+curl "\${options[@]}" \$url
+[[ "\$(curl \${options[@]} -o /dev/null -I -w '%{http_code}' \$url)" == "200" ]]
+EOF
+chmod +x /usr/local/sbin/healthcheck
+
 # purge build dependencies and cleanup apt
 DEBIAN_FRONTEND=noninteractive apt-get purge -y --auto-remove ${BUILD_DEPENDENCIES}
 rm -rf /var/lib/apt/lists/*
 
 # clean up caches
-
 rm -rf ${GITLAB_HOME}/.cache ${GITLAB_HOME}/.bundle ${GITLAB_HOME}/go
