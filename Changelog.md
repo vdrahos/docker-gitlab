@@ -5,6 +5,7 @@ https://gitlab.com/gitlab-org/gitlab-foss/blob/master/CHANGELOG.md) for the list
 
 **13.0.12**
 - gitlab: upgrade CE to v13.0.12
+- golang: upgrade to 1.14.7
 
 **13.0.6**
 - gitlab: upgrade CE to v13.0.6
