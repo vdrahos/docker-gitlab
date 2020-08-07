@@ -1,5 +1,5 @@
 diff --git a/app/assets/javascripts/vue_merge_request_widget/components/states/squash_before_merge.vue b/app/assets/javascripts/vue_merge_request_widget/components/states/squash_before_merge.vue
-index 98f682c2e8a..7294482915f 100644
+index 5305894873f..7294482915f 100644
 --- a/app/assets/javascripts/vue_merge_request_widget/components/states/squash_before_merge.vue
 +++ b/app/assets/javascripts/vue_merge_request_widget/components/states/squash_before_merge.vue
 @@ -29,29 +29,4 @@ export default {
@@ -28,7 +28,7 @@ index 98f682c2e8a..7294482915f 100644
 -      rel="noopener noreferrer nofollow"
 -      data-container="body"
 -    >
--      <icon name="question-o" />
+-      <icon name="question" />
 -    </a>
 -  </div>
  </template>
